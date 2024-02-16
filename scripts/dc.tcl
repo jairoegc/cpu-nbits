@@ -2,7 +2,7 @@
 
 set module_name top
 set n-bits 8
-set library lvt ;#hvt lvt rvt  high, low, regular?
+set library hvt ;#hvt lvt rvt  high, low, regular?
 set speed ff ;#ff ss tt: fast slow and typical
 set voltage 0p85 ;# 
 set temperature 25 ;# 24 n40 125
@@ -32,7 +32,7 @@ write_file -format verilog -hier -out ./my_run/unmapped_${module_name}${n-bits}b
 #write_file -format ddc -hier -out ./my_run/unmapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.ddc
 
 # Timing
-set clk_val 45
+set clk_val 50
 create_clock -period $clk_val [get_port clk]
 set_clock_uncertainty -setup [expr {$clk_val*0.1}] clk
 set_clock_transition -max [expr {$clk_val*0.20}] clk
@@ -87,9 +87,10 @@ check_design > reports/check_design_${module_name}${n-bits}bits_${library}_${spe
 # Save Design
 change_names -hier -rule verilog
 write_file -format verilog -hier -out ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.v
-#write_sdc ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.sdc
+write_sdc ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.sdc
 #write_file -format ddc -hier -out ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.ddc
-#write_parasitics -output ./outputs/parasitics.spef
+write_parasitics -output ./outputs/parasitics.spef
 
 # Exit
 exit
+

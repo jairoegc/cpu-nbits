@@ -1,7 +1,7 @@
 #TOP CPU n-bits
 
 set module_name top
-set n-bits 16
+set n-bits 8
 
 
 ##### FM #######
