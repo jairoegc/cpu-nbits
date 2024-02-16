@@ -12,7 +12,7 @@ set temperature 25 ;# 24 n40 125
 # Search Path and Logic Library Setup
 define_design_lib WORK -path  ./work
 
-set_app_var search_path "$search_path . ./libs/stdcell_${library}/db_nldm/"
+set_app_var search_path "$search_path . ./rtl/ ./libs/stdcell_${library}/db_nldm/"
 set_app_var target_library "saed32${library}_${speed}${voltage}v${temperature}c.db" ;#synopsys armenia educational 32nm low voltage transistor fast-fast 0.85V 25°C
 set_app_var link_library "* $target_library"
 
@@ -89,7 +89,7 @@ change_names -hier -rule verilog
 write_file -format verilog -hier -out ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.v
 write_sdc ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.sdc
 #write_file -format ddc -hier -out ./my_run/mapped_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.ddc
-write_parasitics -output ./outputs/parasitics.spef
+write_parasitics -output ./my_run/parasitics_${module_name}${n-bits}bits_${library}_${speed}${voltage}v${temperature}c.spef
 
 # Exit
 exit
