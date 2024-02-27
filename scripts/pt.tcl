@@ -42,6 +42,11 @@ read_sdc -echo ./my_run/mapped_${module_name}${n-bits}bits_${library}.sdc
 report_analysis_coverage
 
 ########################
+# Generate report por tweaker
+
+report_constraint -all > constraint.rpt
+
+########################
 # Save session
 
 file delete -force ./my_run/pm_session_${module_name}${n-bits}bits_${library}
