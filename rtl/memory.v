@@ -18,7 +18,28 @@ module memory #(
     output logic [2*WIDTH-1:0] memoryOutData
 );
 
-//SRAMLP2RW128x16
+/*SRAMLP2RW128x16 inst_SRAM1(
+    .A1(),      # 7bits address
+    .CE1(),     # CLK
+    .CSB1(),    # enable ram1
+    .WE1(),     # Write enable 1
+    .OEB1(),    # Read enable 1
+    .I1(),      # 16bits
+    .O1(),      # 16bits
+    .LS1(),     #
+    .DS1(),     #
+    .A2(),      # 7bits adress
+    .CE2(),     # CLK
+    .CSB2(),    # enable ram2
+    .WE2(),     # Write enable 2
+    .OEB2(),    # Read enable 2
+    .I2(),      # 16bits
+    .O2(),      # 16bits
+    .LS2(),     #
+    .DS2(),     #
+    .SD()       #
+);
+*/
 
 logic [2*WIDTH:0] mem [255:0];
 

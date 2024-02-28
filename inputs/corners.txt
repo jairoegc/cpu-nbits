@@ -1,0 +1,11 @@
+CORNER_NAME: typ
+TCAD_GRD_FILE: /evprj030/projects/eval9tusr53/Lab_La_Frontera/example.nxtgrd
+OPERATING_TEMPERATURE: 25
+
+CORNER_NAME: min
+TCAD_GRD_FILE: /evprj030/projects/eval9tusr53/Lab_La_Frontera/example.nxtgrd
+OPERATING_TEMPERATURE: 0
+
+CORNER_NAME: max
+TCAD_GRD_FILE: /evprj030/projects/eval9tusr53/Lab_La_Frontera/example.nxtgrd
+OPERATING_TEMPERATURE: 110 
