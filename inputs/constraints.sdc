@@ -1,6 +1,6 @@
 # Power
 
-set_voltage -object_list VDD 0.95 1.16
+set_voltage -object_list VDD 0.95
 set_voltage -object_list VSS 0.0
 
 # Timing
