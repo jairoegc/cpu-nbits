@@ -13,7 +13,7 @@ connect_supply_net VDD -ports VDD
 connect_supply_net VSS -ports VSS
 
 set_design_attributes -elements {.} -attribute correlated_supply_group {*}
-add_power_state -supply ss_main -state ON  { -supply_expr { power == {FULL_ON 0.95 1.16} && ground == {FULL_ON 0.0} } }
+add_power_state -supply ss_main -state ON  { -supply_expr { power == {FULL_ON 0.95} && ground == {FULL_ON 0.0} } }
 #add_power_state -supply ss_main -state ON  { -supply_expr { power == {FULL_ON 0.95} && ground == {FULL_ON 0.0} } }
 
 
