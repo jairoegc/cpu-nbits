@@ -17,7 +17,7 @@ module memory #(
     input logic [7:0] memoryAddress,
     output logic [2*WIDTH-1:0] memoryOutData
 );
-
+/*
 SRAMLP2RW128x16 inst_SRAM1(
     .A1(memoryAddress[6:0]),    // 7bits address
     .CE1(clk),                  // CLK
@@ -39,8 +39,8 @@ SRAMLP2RW128x16 inst_SRAM1(
     .DS2(1'd0),
     .SD(1'd0)
 );
+*/
 
-/*
 logic [2*WIDTH:0] mem [255:0];
 
 assign memoryOutData = (memoryRead && !memoryWrite)? mem[memoryAddress]:0;
@@ -60,6 +60,6 @@ always_ff@(posedge clk)
 begin
     mem[memoryAddress] <= mem_next;
 end
-*/
+
 
 endmodule
