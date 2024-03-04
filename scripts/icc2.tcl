@@ -18,9 +18,9 @@ set TECH_FILE                   "./libs/tech/saed32nm_1p9m.tf"      ;# A technol
 #set TECH_LIB_FILE               "$REFLIB_PATH/saed32_1p9m_tech.ndm"
 #set TECH_LIB                    [file rootname [file tail $TECH_LIB_FILE]]
 
-set UPF_FILE  "power.upf"
-set SDC_file "${module_name}${n-bits}bits_${library}.sdc"
-set Project_lib "${module_name}${n-bits}bits_${library}.db"
+set UPF_FILE  "inputs/power.upf"
+set SDC_file "./outputs/mapped_${module_name}${n-bits}bits_${library}.sdc"
+set Project_lib "mapped_${module_name}${n-bits}bits_${library}.dlib"
 
 set REFERENCE_LIBRARY           [join "
         $REFLIB_PATH/saed32_hvt.ndm
@@ -29,7 +29,7 @@ set REFERENCE_LIBRARY           [join "
         $REFLIB_PATH/saed32_sram_lp.ndm
 "]
 
-set IMPORT			"./my_run"
+set IMPORT			"./outputs"
 set VERILOG_NETLIST_FILES	"${IMPORT}/${DESIGN_NAME}.v"		;# Verilog netlist files
 #set UPF_FILE 			"${IMPORT}/${DESIGN_NAME}.upf"		;# A UPF file
 #set UPF_SUPPLEMENTAL_FILE 	""					;# The supplemental UPF file for golden UPF flow
@@ -44,7 +44,7 @@ set VERILOG_NETLIST_FILES	"${IMPORT}/${DESIGN_NAME}.v"		;# Verilog netlist files
 
 set ADDITIONAL_SEARCH_PATH [join "
   scripts
-  ./my_run
+  ./outputs
 "]
 
 set TOP ${module_name}_WIDTH${n-bits}
@@ -57,10 +57,10 @@ read_sdc $SDC_file
 ## Tech setup ##
 ################
 
-set_technology -node 32
+set_technology -node 28
 
-read_parasitic_tech -layermap ref/tech/saed32nm_tf_itf_tluplus.map -tlup ref/tech/saed32nm_1p9m_Cmax.lv.nxtgrd -name maxTLU
-read_parasitic_tech -layermap ref/tech/saed32nm_tf_itf_tluplus.map -tlup ref/tech/saed32nm_1p9m_Cmin.lv.nxtgrd -name minTLU
+read_parasitic_tech -layermap libs/tech/saed32nm_tf_itf_tluplus.map -tlup libs/tech/saed32nm_1p9m_Cmax.lv.nxtgrd -name maxTLU
+read_parasitic_tech -layermap libs/tech/saed32nm_tf_itf_tluplus.map -tlup libs/tech/saed32nm_1p9m_Cmin.lv.nxtgrd -name minTLU
 report_lib -parasitic_tech [current_lib]
 
 get_site_defs
@@ -82,9 +82,8 @@ set_lib_cell_purpose -include optimization [get_lib_cells */TIE*]
 ## Load UPF ##
 ##############
 
-load_upf $UPF_file
+load_upf $UPF_FILE
 commit_upf
-
 
 ##########
 ## MCCM ##
@@ -131,8 +130,7 @@ current_scenario func::ss_125c
 ###############
 ## Floorplan ##
 ###############
-
-initialize_floorplan -shape R -orientation W -side_ratio {2 2 1 2} -core_offset {20}
+initialize_floorplan -shape Rect -side_ratio {1 1} -core_offset {20}
 shape_blocks
 create_placement -floorplan
 set_block_pin_constraints -self -allowed_layers {M3 M4 M5 M6}
