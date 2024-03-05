@@ -4,53 +4,30 @@ set module_name top
 set n-bits 8
 set library saed32
 
+###################
+## Import design ##
+###################
+
 set_host_options -max_cores 8
-
-# Falta agregar sdc, falta agregar escenario para hold y cosas extra de la version de ronaldo. falta definir area.
-# falta usar macros de SRAM. NDR rules for CTS.
-
-set DESIGN_NAME 		mapped_${module_name}${n-bits}bits_${library}	;# Name of the design to be worked on
-set DESIGN_LIBRARY 		"${DESIGN_NAME}.dlib" ;# Name of the design library
-
-set REFLIB_PATH                 "./libs/CLIBs"
-set TECH_FILE                   "./libs/tech/saed32nm_1p9m.tf"      ;# A technology file; TECH_FILE and TECH_LIB are mutually exclusive ways to specify technology information;
-                                        ;# TECH_FILE is recommended, although TECH_LIB is also supported in ICC2 RM.
-#set TECH_LIB_FILE               "$REFLIB_PATH/saed32_1p9m_tech.ndm"
-#set TECH_LIB                    [file rootname [file tail $TECH_LIB_FILE]]
-
-set UPF_FILE  "inputs/power.upf"
-set SDC_file "./outputs/mapped_${module_name}${n-bits}bits_${library}.sdc"
-set Project_lib "mapped_${module_name}${n-bits}bits_${library}.dlib"
-
+set_app_var search_path  "."
+set TECH_FILE "libs/tech/saed32nm_1p9m.tf"
 set REFERENCE_LIBRARY           [join "
-        $REFLIB_PATH/saed32_hvt.ndm
-        $REFLIB_PATH/saed32_lvt.ndm
-        $REFLIB_PATH/saed32_rvt.ndm
-        $REFLIB_PATH/saed32_sram_lp.ndm
+        libs/CLIBs/saed32_hvt.ndm
+        libs/CLIBs/saed32_lvt.ndm
+        libs/CLIBs/saed32_rvt.ndm
+        libs/CLIBs/saed32_sram_lp.ndm
+
 "]
 
-set IMPORT			"./outputs"
-set VERILOG_NETLIST_FILES	"${IMPORT}/${DESIGN_NAME}.v"		;# Verilog netlist files
-#set UPF_FILE 			"${IMPORT}/${DESIGN_NAME}.upf"		;# A UPF file
-#set UPF_SUPPLEMENTAL_FILE 	""					;# The supplemental UPF file for golden UPF flow
-#set TCL_MCMM_SETUP_FILE		"scripts/mcmm_ORCA_TOP.tcl"		;# A Tcl script placeholder to create your corners, modes, and scenarios,
-#set DEF_FLOORPLAN_FILES 	"${IMPORT}/${DESIGN_NAME}.def"		;# DEF files which contain the floorplan information
-#set DEF_SCAN_FILE 		"${IMPORT}/${DESIGN_NAME}.scandef"	;# A scan DEF
+set TOP "top_WIDTH8"
+set FILE_HDL "outputs/mapped_${module_name}${n-bits}bits_${library}.v"
+set UPF_file "inputs/power.upf"
+set SDC_file "outputs/mapped_${module_name}${n-bits}bits_${library}.sdc"
+set Project_lib "mapped_${module_name}${n-bits}bits_${library}.db"
 
-#set HORIZONTAL_ROUTING_LAYER_LIST "M1 M3 M5 M7 M9"	;# A list of horizontal routing layers; optional; should be defined if missing in tech file
-#set VERTICAL_ROUTING_LAYER_LIST   "M2 M4 M6 M8"		;# A list of vertical routing layers; optional; should be defined if missing in tech file
-#set MIN_ROUTING_LAYER	  	  "M1"			;# Min routing layer name
-#set MAX_ROUTING_LAYER 		  "M8"			;# Max routing layer name
+create_lib -technology $TECH_FILE -ref_libs $REFERENCE_LIBRARY $Project_lib 
 
-set ADDITIONAL_SEARCH_PATH [join "
-  scripts
-  ./outputs
-"]
-
-set TOP ${module_name}_WIDTH${n-bits}
-
-create_lib -technology $TECH_FILE -ref_libs $REFERENCE_LIBRARY $DESIGN_LIBRARY
-read_verilog -top $TOP $VERILOG_NETLIST_FILES
+read_verilog -top $TOP $FILE_HDL
 read_sdc $SDC_file
 
 ################
@@ -82,7 +59,7 @@ set_lib_cell_purpose -include optimization [get_lib_cells */TIE*]
 ## Load UPF ##
 ##############
 
-load_upf $UPF_FILE
+load_upf $UPF_file
 commit_upf
 
 ##########
