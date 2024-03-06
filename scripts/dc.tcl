@@ -81,7 +81,7 @@ compile_ultra -no_autoungroup
 #insert_dft
 #dft_drc
 
-#compile_ultra -no_autoungroup -gate_clock -incr -scan
+compile_ultra -no_autoungroup -incr -retime
 #dft_drc
 
 #write_scan_def -output ./outputs/dft_${module_name}${n-bits}bits_${library}.scandef

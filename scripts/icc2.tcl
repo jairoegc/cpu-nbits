@@ -131,6 +131,8 @@ remove_routes -net_types {power ground} -ring -stripe -macro_pin_connect -lib_ce
 
 connect_pg_net
 
+#set_pg_via_master_rule pgvia_8x10 -via_array_dimension {8 10}
+
 ## top power ring
 
 create_pg_ring_pattern ring_pattern -horizontal_layer M5 \

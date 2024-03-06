@@ -29,6 +29,9 @@ report_guidance > reports/guidance_${module_name}${n-bits}bits_${library}.rpt
 
 save_session -replace ./sessions/pre_verify_${module_name}${n-bits}bits_${library}.fss 
 
+#set_app_var verification_clock_gate_reverse_gating true
+#guide_scan_input -design top -disable_value 0 -ports { test_se }
+
 match > reports/match_${module_name}${n-bits}bits_${library}.rpt
 
 report_matched_points > reports/matched_points_${module_name}${n-bits}bits_${library}.rpt
