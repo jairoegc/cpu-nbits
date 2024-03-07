@@ -66,7 +66,7 @@ if {![check_mv_design -power_nets]} {
 
 # Compile/Synthesis
 #compile_ultra -no_autoungroup -gate_clock -scan  > reports/compile_${module_name}${n-bits}bits_${library}.rpt
-compile_ultra -no_autoungroup 
+compile_ultra -no_autoungroup -gate_clock -scan
 
 #sizeof_collection [all_registers]
 #optimize_registers
@@ -74,21 +74,21 @@ compile_ultra -no_autoungroup
 
 #optimize_netlist -area
 
-#create_test_protocol -infer_clock -infer_asynch
-#dft_drc
+create_test_protocol -infer_clock -infer_asynch
+dft_drc
 
 #preview_dft
-#insert_dft
-#dft_drc
+insert_dft
+dft_drc
 
-compile_ultra -no_autoungroup -incr -retime
-#dft_drc
+compile_ultra -no_autoungroup -incr -retime -scan
+dft_drc
 
-#write_scan_def -output ./outputs/dft_${module_name}${n-bits}bits_${library}.scandef
+write_scan_def -output ./outputs/dft_${module_name}${n-bits}bits_${library}.scandef
 
 # Post-compile Reports
-#report_clock_gating > reports/clock_gating_${module_name}${n-bits}bits_${library}.rpt
-#report_scan_path -view existing_dft -chain all > reports/scan_${module_name}${n-bits}bits_${library}.rpt
+report_clock_gating > reports/clock_gating_${module_name}${n-bits}bits_${library}.rpt
+report_scan_path -view existing_dft -chain all > reports/scan_${module_name}${n-bits}bits_${library}.rpt
 report_timing > reports/timing_${module_name}${n-bits}bits_${library}.rpt
 report_constraint -all_violators > reports/constraint_${module_name}${n-bits}bits_${library}.rpt
 report_qor > reports/qor_${module_name}${n-bits}bits_${library}.rpt
@@ -101,7 +101,7 @@ check_design > reports/check_design_${module_name}${n-bits}bits_${library}.rpt
 #change_names -hier -rule verilog
 write_file -format verilog -hier -out ./outputs/mapped_${module_name}${n-bits}bits_${library}.v
 write_sdc ./outputs/mapped_${module_name}${n-bits}bits_${library}.sdc
-#write_file -format ddc -hier -out ./outputs/mapped_${module_name}${n-bits}bits_${library}.ddc
+write_file -format ddc -hier -out ./outputs/mapped_${module_name}${n-bits}bits_${library}.ddc
 write_parasitics -output ./outputs/parasitics_${module_name}${n-bits}bits_${library}.spef
 
 # Exit

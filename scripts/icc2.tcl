@@ -29,6 +29,7 @@ create_lib -technology $TECH_FILE -ref_libs $REFERENCE_LIBRARY $Project_lib
 
 read_verilog -top $TOP $FILE_HDL
 read_sdc $SDC_file
+read_def outputs/dft_${module_name}${n-bits}bits_${library}.scandef
 
 ################
 ## Tech setup ##
@@ -103,6 +104,8 @@ set_scenario_status func::ff_125c -hold true
 #create_clock -period 50 -name clk [get_ports clk]
 
 current_scenario func::ss_125c
+
+return 
 
 ###############
 ## Floorplan ##
