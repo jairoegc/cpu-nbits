@@ -103,9 +103,7 @@ set_scenario_status func::ff_125c -hold true
 
 #create_clock -period 50 -name clk [get_ports clk]
 
-current_scenario func::ss_125c
-
-return 
+current_scenario func::ss_125c 
 
 ###############
 ## Floorplan ##
@@ -121,6 +119,13 @@ legalize_placement
 #create_boundary_cells -left_boundary_cell   \
              -right_boundary_cell $REFERENCE_LIBRARY 
 
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/floorplant.design
+
+write_floorplan -net_types {power ground} \
+  -include_physical_status {fixed locked} \
+  -read_def_options {-add_def_only_objects all -no_incremental} \
+  -force -output ${module_name}${n-bits}bits_${library}.fp/
+
 ########
 ## PG ##
 ########
@@ -134,28 +139,137 @@ remove_routes -net_types {power ground} -ring -stripe -macro_pin_connect -lib_ce
 
 connect_pg_net
 
-#set_pg_via_master_rule pgvia_8x10 -via_array_dimension {8 10}
+#################
+# PG Power Ring #
+#################
 
-## top power ring
+# ## top power ring
 
-create_pg_ring_pattern ring_pattern -horizontal_layer M5 \
-   -horizontal_width {5} -horizontal_spacing {2} \
-   -vertical_layer M6 -vertical_width {5} -vertical_spacing {2}
+# create_pg_ring_pattern ring_pattern -horizontal_layer M5 \
+#    -horizontal_width {5} -horizontal_spacing {2} \
+#    -vertical_layer M6 -vertical_width {5} -vertical_spacing {2}
 
-set_pg_strategy core_ring \
-   -pattern {{name: ring_pattern} \
-   {nets: {VDD VSS}} {offset: {3 3}}} -core
+# set_pg_strategy core_ring \
+#    -pattern {{name: ring_pattern} \
+#    {nets: {VDD VSS}} {offset: {3 3}}} -core
 
-compile_pg -strategies core_ring
+# compile_pg -strategies core_ring
 
-## power stripes
+# ## power stripes
 
-create_pg_std_cell_conn_pattern rail_pattern -layers M1
+# create_pg_std_cell_conn_pattern rail_pattern -layers M1
 
-set_pg_strategy M1_rails -core \
-   -pattern {{name: rail_pattern}{nets: VDD VSS}}
+# set_pg_strategy M1_rails -core \
+#    -pattern {{name: rail_pattern}{nets: VDD VSS}}
 
-compile_pg -strategies M1_rails
+# compile_pg -strategies M1_rails
+
+# ###########
+# PG Mesh #
+###########
+
+set_pg_via_master_rule pgvia_8x10 -via_array_dimension {8 10}
+
+# set all_macros [get_cells -hierarchical -filter "is_hard_macro && !is_physical_only"]
+# set hm(risc_core) [get_cells -filter "is_hard_macro==true" -physical_context *REG_FILE_*_RAM*]
+# set hm(top) [remove_from_collection $all_macros $hm(risc_core)]
+
+
+# create_keepout_margin -outer {3 3 3 3}  $all_macros
+
+
+################################################################################
+# Build the main power mesh.  Consists of:
+# * a coarse mesh on m7/m8
+# * a finer mesh on M2 - vertical only - to connect to the std cell rails
+#
+
+# width m7/m8: pitch=1.216, min_spacing=0.056, min_width=0.056; m7: 2*1.216 - 4*0.056
+create_pg_mesh_pattern P_top_two \
+	-layers { \
+		{ {horizontal_layer: M7} {width: 1.104} {spacing: interleaving} {pitch: 13.376} {offset: 0.856} {trim : true} } \
+		{ {vertical_layer: M8}   {width: 4.64 } {spacing: interleaving} {pitch: 19.456} {offset: 6.08}  {trim : true} } \
+		} \
+	-via_rule { {intersection: adjacent} {via_master : pgvia_8x10} }
+
+# m2 pitch=0.152; 0.152*48=7.296
+create_pg_mesh_pattern P_m2_triple \
+	-layers { \
+		{ {vertical_layer: M2}  {track_alignment : track} {width: 0.44 0.192 0.192} {spacing: 2.724 3.456} {pitch: 9.728} {offset: 1.216} {trim : true} } \
+		}
+
+
+##==> top mesh - M7/M8
+set_pg_strategy S_default_vddvss \
+	-core \
+	-pattern   { {name: P_top_two} {nets:{VSS VDD}} {offset_start: {20 20}} } \
+	-extension { {{stop:design_boundary_and_generate_pin}} }
+
+# set_pg_strategy S_va_vddh \
+# 	-voltage_areas PD_RISC_CORE \
+# 	-pattern   { {name: P_top_two} {nets: {- VDDH}} {offset_start: {20 20}} } \
+# 	-extension { {{direction:TR} {stop:design_boundary_and_generate_pin}} }
+
+
+##==> low mesh - M2
+set_pg_strategy S_m2_vddvss \
+	-core \
+	-pattern   { {name: P_m2_triple} {nets: {VDD VSS VSS}} {offset_start: {20 0}} } \
+	-extension { {{direction:BT} {stop:design_boundary_and_generate_pin}} }
+
+# set_pg_strategy S_m2_vddh \
+# 	-voltage_areas PD_RISC_CORE \
+# 	-pattern   { {name: P_m2_triple} {nets: {VDDH - -}} {offset_start: {20 0}} } \
+# 	-blockage  { {macros_with_keepout: $hm(risc_core)} } \
+# 	-extension { {{direction:T} {stop:design_boundary_and_generate_pin}} }
+
+set_pg_strategy_via_rule S_via_m2_m7 \
+	-via_rule { \
+		{  {{strategies: {S_m2_vddvss}}      {layers: { M2 }} {nets: { VDD }} } \
+		   {{strategies: {S_default_vddvss}} {layers: { M7 }} }  \
+			{via_master: {default}} } \
+		{  {{strategies: {S_m2_vddvss}}      {layers: { M2 }} {nets: { VSS }} } \
+		   {{strategies: {S_default_vddvss}} {layers: { M7 }} } \
+			{via_master: {default}} } \
+	}
+
+# You can use the -ignore_drc switch to speed things up a little. Not an issue in this lab though!
+#compile_pg -strategies {S_va_vddh S_m2_vddh}
+compile_pg -strategies {S_default_vddvss S_m2_vddvss} -via_rule {S_via_m2_m7}
+
+################################################################################
+# Build the standard cell rails
+
+create_pg_std_cell_conn_pattern P_std_cell_rail
+
+set_pg_strategy S_std_cell_rail_VSS_VDD \
+	-core \
+	-pattern {{pattern: P_std_cell_rail}{nets: {VSS VDD}}}
+	#-extension {{stop: outermost_ring}{direction: L B R T }}
+
+set_pg_strategy_via_rule S_via_stdcellrail \
+        -via_rule {{intersection: adjacent}{via_master: default}}
+
+compile_pg -strategies S_std_cell_rail_VSS_VDD -via_rule {S_via_stdcellrail}
+
+check_pg_missing_vias
+check_pg_drc -ignore_std_cells
+check_pg_connectivity -check_std_cell_pins none
+
+create_pg_special_pattern pt1 -insert_channel_straps { \
+      {layer: M1} {direction: vertical} {width: 0.2}
+      {channel_between_objects: macro} {channel_threshold: 5} }
+
+set_pg_strategy st1 \
+  -core \
+  -pattern {{name: pt1} {nets: VDD VSS}}
+
+
+compile_pg -strategies st1 -tag channel_straps
+
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/PG.design
+
+return
 
 ################
 ### Placement ##
@@ -169,6 +283,10 @@ place_opt
 
 check_legality
 check_mv_design
+
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/placement.design
+
+return 
 
 #########
 ## CTS ##
@@ -304,6 +422,9 @@ report_clock_routing_rules
 
 clock_opt
 
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/cts.design
+
+
 #############
 ## Routing ##
 #############
@@ -330,6 +451,8 @@ route_auto
 
 check_routes
 
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_auto.design
+
 ## For week 6 (Signoff)
 #set_starrc_in_design -config ./scripts/starrc_config.txt
 
@@ -342,6 +465,9 @@ route_opt
 
 report_qor
 
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_opt1.design
+
+
 #Second route optimization
 
 set_app_options -name route.detail.eco_route_use_soft_spacing_for_timing_optimization -value false
@@ -349,3 +475,5 @@ set_app_options -name route_opt.flow.enable_ccd -value false
 
 route_opt
 report_qor
+
+save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_opt2.design
