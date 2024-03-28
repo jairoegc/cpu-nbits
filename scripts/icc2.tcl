@@ -2,7 +2,7 @@
 
 set module_name top
 set n-bits 8
-set library saed32
+set library cgrt
 
 ###################
 ## Import design ##
@@ -25,8 +25,8 @@ set UPF_file "inputs/power.upf"
 set SDC_file "outputs/mapped_${module_name}${n-bits}bits_${library}.sdc"
 set Project_lib "mapped_${module_name}${n-bits}bits_${library}.db"
 
-create_lib -technology $TECH_FILE -ref_libs $REFERENCE_LIBRARY $Project_lib 
-
+#create_lib -technology $TECH_FILE -ref_libs $REFERENCE_LIBRARY $Project_lib 
+open_lib -write $Project_lib
 read_verilog -top $TOP $FILE_HDL
 read_sdc $SDC_file
 read_def outputs/dft_${module_name}${n-bits}bits_${library}.scandef
@@ -85,7 +85,7 @@ create_mode func
 create_scenario -mode func -corner ss_125c
 set_scenario_status func::ss_125c -hold false ;#agregar ff y true para hold jejeje
 
-create_clock -period 50 -name clk [get_ports clk]
+create_clock -period 100 -name clk [get_ports clk]
 
 ## func_ff_0p96v_125c 
 
@@ -101,7 +101,7 @@ set_temperature 125
 create_scenario -mode func -corner ff_125c
 set_scenario_status func::ff_125c -hold true
 
-#create_clock -period 50 -name clk [get_ports clk]
+#create_clock -period 100 -name [get_ports clk]
 
 current_scenario func::ss_125c 
 
@@ -111,15 +111,20 @@ current_scenario func::ss_125c
 initialize_floorplan -shape Rect -side_ratio {1 1} -core_offset {20}
 shape_blocks
 create_placement -floorplan
-set_block_pin_constraints -self -allowed_layers {M3 M4 M5 M6}
+
+
+create_pin_constraint -type individual -layers {M3 M4 M5 M6} -sides {1} -offset {25 312} -pin_spacing_distance {15} -ports {din_1* din_2*}
+create_pin_constraint -type individual -layers {M3 M4 M5 M6} -sides {2} -offset {25 250} -pin_spacing_distance {15} -ports {cmdin* test* rst}
+create_pin_constraint -type individual -layers {M3 M4 M5 M6} -sides {3} -offset {25 312} -pin_spacing_distance {15} -ports {dout* error zero}
+create_pin_constraint -type individual -layers {M3 M4 M5 M6} -sides {4} -offset {190 312} -pin_spacing_distance {15} -ports {din_3*}
+create_pin_constraint -type individual -layers {M3 M4 M5 M6} -sides {4} -offset {160 180} -pin_spacing_distance {15} -ports {clk}
+
 place_pins -self
 
 legalize_placement
 
-#create_boundary_cells -left_boundary_cell   \
-             -right_boundary_cell $REFERENCE_LIBRARY 
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/floorplant.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/floorplant.design
 
 write_floorplan -net_types {power ground} \
   -include_physical_status {fixed locked} \
@@ -267,9 +272,9 @@ set_pg_strategy st1 \
 
 compile_pg -strategies st1 -tag channel_straps
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/PG.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/PG.design
 
-return
+#return
 
 ################
 ### Placement ##
@@ -279,14 +284,16 @@ report_app_options place.coarse.auto_density_control
 set_app_options -name place.coarse.enhanced_auto_density_control -value true
 set_app_options -name place.legalize.enable_advanced_legalizer -value true
 
+set_qor_strategy -stage pnr -mode extreme_power -metric total_power
+
 place_opt
 
 check_legality
 check_mv_design
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/placement.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/placement.design
 
-return 
+#return 
 
 #########
 ## CTS ##
@@ -318,6 +325,7 @@ if {$CTS_NDR_RULE_NAME != ""} {
 		-default_reference_rule \
 		-widths { M1 0.1 M2 0.11 M3 0.11 M4 0.11 M5 0.11 } \
 		-spacings { M2 0.16 M3 0.45 M4 0.45 M5 1.1 } \
+		-spacing_length_thresholds { M2 3.0 M3 3.0 M4 3.0 M5 3.0 } \
 		-taper_distance 0.4 \
 		-driver_taper_distance 0.4 \
 		-cuts { \
@@ -339,7 +347,10 @@ if {$CTS_LEAF_NDR_RULE_NAME != ""} {
 
 	create_routing_rule $CTS_LEAF_NDR_RULE_NAME \
 		-default_reference_rule \
-		-spacings { M2 0.16 M3 0.45 M4 0.45 M5 1.1 }
+		-spacings { M2 0.16 M3 0.45 M4 0.45 M5 1.1 } \
+		-spacing_length_thresholds { M2 3.0 M3 3.0 M4 3.0 M5 3.0 }
+
+
 
 	set_clock_routing_rules -net_type sink -rules $CTS_LEAF_NDR_RULE_NAME \
 		-min_routing_layer $CTS_LEAF_NDR_MIN_ROUTING_LAYER \
@@ -413,7 +424,8 @@ set_lib_cell_purpose -include hold [get_lib_cells "*/DELLN*_HVT */NBUFFX2_HVT */
 set_lib_cell_purpose -include hold [get_lib_cells "*/DELLN*_RVT */NBUFFX2_RVT */NBUFFX4_RVT */NBUFFX8_RVT"]
 
 set_app_options -list {opt.dft.clock_aware_scan true}
-set_app_options -list {clock_opt.hold.effort high}
+set_app_options -list {opt.common.hold_effort high}
+#set_app_options -list {clock_opt.hold.effort high}
 
 set_clock_tree_options -target_skew 0.05 -corners [get_corners ss*]
 set_clock_tree_options -target_skew 0.02 -corners [get_corners ff*]
@@ -422,7 +434,7 @@ report_clock_routing_rules
 
 clock_opt
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/cts.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/cts.design
 
 
 #############
@@ -451,7 +463,7 @@ route_auto
 
 check_routes
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_auto.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/route_auto.design
 
 ## For week 6 (Signoff)
 #set_starrc_in_design -config ./scripts/starrc_config.txt
@@ -465,7 +477,7 @@ route_opt
 
 report_qor
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_opt1.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/route_opt1.design
 
 
 #Second route optimization
@@ -476,4 +488,11 @@ set_app_options -name route_opt.flow.enable_ccd -value false
 route_opt
 report_qor
 
-save_block -as mapped_top8bits_saed32.db:top_WIDTH8/route_opt2.design
+save_block -as mapped_${module_name}${n-bits}bits_${library}.db:top_WIDTH8/route_opt2.design
+
+write_gds top8bits_cgrt.gdsii
+write_sdc -output outputs/final.sdc
+write_name_map outputs/design_map.map
+write_def -design [current_design] design.def
+write_lef -design [current_design] outputs/tech.lef -include tech
+write_parasitics -output outputs/parasitics_icc2

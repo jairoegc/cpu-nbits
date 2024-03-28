@@ -7,7 +7,7 @@
 
 set module_name top
 set n-bits 8
-set library saed32
+set library cgrt
 
 #source ./common_setup.tcl
 #source ./pt_setup.tcl
@@ -39,12 +39,12 @@ read_parasitics ./outputs/parasitics_${module_name}${n-bits}bits_${library}.spef
 # lab1.sdc contained all constraints defined at synthesis stage.
 read_sdc -echo ./outputs/mapped_${module_name}${n-bits}bits_${library}.sdc
 
-report_analysis_coverage > reports/pm_coverage.rpt
+report_analysis_coverage > reports/pt_coverage.rpt
 
 ########################
 # Generate report por tweaker
 
-report_constraint -all > reports/pm_constraint.rpt
+report_constraint -all > reports/pt_constraint.rpt
 
 ########################
 # Save session

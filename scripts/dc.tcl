@@ -2,7 +2,7 @@
 
 set module_name top
 set n-bits 8
-set library saed32
+set library cgrt
 set_host_options -max_cores 8
 
 ####### DC ###########
@@ -21,6 +21,7 @@ set_svf  ./outputs/${module_name}.svf
 analyze -format sverilog {top.v mux4.v mux4_registered.v memory.v register_bank.v ALU.v control.v} > reports/analyze_${module_name}.rpt
 elaborate ${module_name} -parameters WIDTH=${n-bits} > reports/elaborate_${module_name}.rpt
 
+
 # Save pre-Design
 #write_file -format verilog -hier -out ./outputs/unmapped_${module_name}${n-bits}bits_${library}.v
 #write_sdc ./outputs/unmapped_${module_name}${n-bits}bits_${library}.sdc
@@ -37,7 +38,7 @@ set_voltage -object_list VSS 0.0
 
 ## Timing
 
-set clk_val 50
+set clk_val 100
 create_clock -period $clk_val [get_port clk]
 set_clock_uncertainty -setup [expr {$clk_val*0.1}] clk
 set_clock_transition -max [expr {$clk_val*0.20}] clk
@@ -66,7 +67,8 @@ if {![check_mv_design -power_nets]} {
 
 # Compile/Synthesis
 #compile_ultra -no_autoungroup -gate_clock -scan  > reports/compile_${module_name}${n-bits}bits_${library}.rpt
-compile_ultra -no_autoungroup -gate_clock -scan
+compile_ultra -gate_clock 
+compile_ultra -incr -retime
 
 #sizeof_collection [all_registers]
 #optimize_registers
@@ -77,11 +79,11 @@ compile_ultra -no_autoungroup -gate_clock -scan
 create_test_protocol -infer_clock -infer_asynch
 dft_drc
 
-#preview_dft
+preview_dft
 insert_dft
 dft_drc
 
-compile_ultra -no_autoungroup -incr -retime -scan
+compile_ultra -incr -scan
 dft_drc
 
 write_scan_def -output ./outputs/dft_${module_name}${n-bits}bits_${library}.scandef
@@ -106,4 +108,3 @@ write_parasitics -output ./outputs/parasitics_${module_name}${n-bits}bits_${libr
 
 # Exit
 exit
-

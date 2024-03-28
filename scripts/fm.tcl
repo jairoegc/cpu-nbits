@@ -1,8 +1,9 @@
+
 #TOP CPU n-bits
 
 set module_name top
 set n-bits 8
-set library saed32
+set library cgrt
 
 
 ##### FM #######
@@ -28,12 +29,6 @@ set_top ${module_name}_WIDTH${n-bits}
 report_guidance > reports/guidance_${module_name}${n-bits}bits_${library}.rpt
 
 save_session -replace ./sessions/pre_verify_${module_name}${n-bits}bits_${library}.fss 
-
-#set_app_var verification_clock_gate_reverse_gating true
-#guide_scan_input -design top -disable_value 0 -ports { test_se }
-#set_constant -type port r:<puerto>/port 0
-#set_constant -type port i:<puerto>/port 0
-
 
 match > reports/match_${module_name}${n-bits}bits_${library}.rpt
 
